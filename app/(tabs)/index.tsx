@@ -8,33 +8,23 @@ import { fetchMovies } from "@/services/api";
 import { getTrendingMovie } from "@/services/appwrite";
 import useFetch from "@/services/useFetch";
 import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import "../globals.css";
 
 const LatestMovies = () => {
     const [page, setPage] = useState(1);
     const [selectedLetter, setSelectedLetter] = useState('');
-    const [movies, setMovies] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<any>(null);
-    const [totalPages, setTotalPages] = useState(1);
+    
+    const fetchLatestMovies = useCallback(
+      () => fetchMovies({ query: selectedLetter, page }),
+      [page, selectedLetter]
+    );
 
-    useEffect(() => {
-        const fetchLatestMovies = async () => {
-            try {
-                setLoading(true);
-                const fetchedData = await fetchMovies({ query: selectedLetter, page });
-                setMovies(fetchedData.results);
-                setTotalPages(fetchedData.total_pages);
-            } catch (err) {
-                setError(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchLatestMovies();
-    }, [page, selectedLetter]);
+    const {data: fetchedData, loading: moviesLoading, error: moviesError} = useFetch(fetchLatestMovies);
+
+    const movies = fetchedData?.results || [];
+    const totalPages = fetchedData?.total_pages || 1;
   
     // Sort movies by rating and filter by selected letter for a clean 3-column layout
     const sortedAndFilteredMovies = useMemo(() => {
@@ -43,7 +33,7 @@ const LatestMovies = () => {
             ? movies.filter(movie => movie.title.toLowerCase().startsWith(selectedLetter.toLowerCase()))
             : movies;
 
-        return filtered.sort((a, b) => {
+        return filtered.sort((a: { title: string | any[]; vote_average: number; }, b: { title: string | any[]; vote_average: number; }) => {
             // Push single-character titles to the last
             if (a.title.length === 1 && b.title.length !== 1) {
                 return 1;
@@ -76,14 +66,14 @@ const LatestMovies = () => {
   
     return (
         <View className="flex-1">
-            <Text className="text-lg font-bold mt-5 mb-3 text-white">Movies</Text>
+            <Text className="text-lg font-bold mt-5 mb-3 text-white">Latest Movies</Text>
             <View className="bg-dark-200 py-3 rounded-lg mb-5">
               <AlphabetFilter onSelect={handleAlphabetSelect} selectedLetter={selectedLetter} />
             </View>
-            {loading ? (
+            {moviesLoading ? (
                 <ActivityIndicator size="large" color="#0000ff" className="self-center mt-5" />
-            ) : error ? (
-                <Text>Error: {error.message}</Text>
+            ) : moviesError ? (
+                <Text>Error: {moviesError.message}</Text>
             ) : (
                 <>
                 <FlatList
@@ -111,7 +101,7 @@ const LatestMovies = () => {
                         disabled={page === 1}
                         className={`px-4 py-2 rounded-lg ${page === 1 ? 'bg-dark-200' : 'bg-accent'}`}
                     >
-                        <Text className={`text-lg ${page === 1 ? 'text-white' : 'text-secondary font-semibold'}`}>Previous</Text>
+                        <Text className="text-white text-lg">Previous</Text>
                     </TouchableOpacity>
                     <Text className="text-light-100 text-lg">Page {page}</Text>
                     <TouchableOpacity
@@ -119,7 +109,7 @@ const LatestMovies = () => {
                         disabled={page === totalPages}
                         className={`px-4 py-2 rounded-lg ${page === totalPages ? 'bg-dark-200' : 'bg-accent'}`}
                     >
-                        <Text className={`text-lg ${page === totalPages ? 'text-white' : 'text-secondary font-semibold'}`}>Next</Text>
+                        <Text className="text-white text-lg">Next</Text>
                     </TouchableOpacity>
                 </View>
                 )}
@@ -131,7 +121,7 @@ const LatestMovies = () => {
 
 export default function App() {
   const router = useRouter();
-  const { data: trendingMovies, loading: trendingLoading, error: trendingError } = useFetch(getTrendingMovie);
+  const { data: trendingMovies, loading: trendingLoading, error: trendingError } = useFetch(getTrendingMovie)
 
   return (
     <View className="flex-1 bg-primary pb-10">
@@ -139,23 +129,22 @@ export default function App() {
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} contentContainerStyle={{minHeight: "100%", paddingBottom: 10}}>
           <Image source={icons.logo} className="w-12 h-20 mt-20 mb-5 mx-auto"/>
           {
-            trendingLoading ? (
-              <ActivityIndicator size="large" color="#0000ff" className="mt-10 self-center"/>
-            ) : trendingError ? (
-              <Text>Error: {trendingError?.message}</Text>
-            ) : (
+            trendingLoading ? (<ActivityIndicator size="large" color="#0000ff" className="mt-10 self-center"/>) 
+            : trendingError ? (<Text>Error: {trendingError.message}</Text>) 
+            : (
               <View className="flex-1 mt-5">
                 <SearchBar
-                  onPress={() => router.push("/search")}
+                  onPress={() => router.push({ pathname: "/search", params: { focus: "true" } })}
                   placeholder = "Search for a movie"
                 />
                 {
                   trendingMovies && (
                     <View className="mt-10 ">
-                      <Text className="text-lg font-bold text-white mt-5 mb-3">Top Searches</Text>
+                      <Text className="text-lg font-bold text-white mt-5 mb-3">Trending Movies</Text>
                     </View>
                   )
                 }
+                <>
                 <FlatList
                   className="mb-4 mt-3"
                   horizontal
@@ -171,7 +160,8 @@ export default function App() {
                     paddingLeft: 5,
                   }}
                 />
-                <LatestMovies />
+                <LatestMovies/>
+                </>
               </View>
             )
           }
