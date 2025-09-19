@@ -6,10 +6,11 @@ export const TMDB_CONFIG = {
         Authorization: `Bearer ${process.env.EXPO_PUBLIC_MOVIE_API_KEY}`
     }
 }  
-export const fetchMovies = async({query}: {query: string}) => {
+
+export const fetchMovies = async({query, page = 1}: {query: string, page?: number}) => {
      const endpoint = query
-     ? `${TMDB_CONFIG.BASE_URL}/search/movie?query=${encodeURIComponent(query)}`
-     : `${TMDB_CONFIG.BASE_URL}/discover/movie?sort_by=popularity.desc`;
+     ? `${TMDB_CONFIG.BASE_URL}/search/movie?query=${encodeURIComponent(query)}&page=${page}`
+     : `${TMDB_CONFIG.BASE_URL}/discover/movie?sort_by=popularity.desc&page=${page}`;
 
      const response = await fetch(endpoint, {
         method: 'GET',
