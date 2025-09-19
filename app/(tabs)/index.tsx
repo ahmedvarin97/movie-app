@@ -61,14 +61,14 @@ const LatestMovies = () => {
                     <TouchableOpacity
                         onPress={handlePrevious}
                         disabled={page === 1}
-                        className={`px-4 py-2 rounded-lg ${page === 1 ? 'bg-gray-500' : 'bg-blue-500'}`}
+                        className={`px-4 py-2 rounded-full ${page === 1 ? 'bg-[#0F0D23]' : 'bg-[#AB8BFF]'}`}
                     >
-                        <Text className="text-white text-lg">Previous</Text>
+                        <Text className={`text-lg ${page === 1 ? 'text-light-200' : 'text-white'}`}>Previous</Text>
                     </TouchableOpacity>
-                    <Text className="text-white text-lg">Page {page}</Text>
+                    <Text className="text-light-100 font-bold text-sm">Page {page}</Text>
                     <TouchableOpacity
                         onPress={handleNext}
-                        className="px-4 py-2 rounded-lg bg-blue-500"
+                        className="px-4 py-2 rounded-full bg-[#AB8BFF]"
                     >
                         <Text className="text-white text-lg">Next</Text>
                     </TouchableOpacity>
