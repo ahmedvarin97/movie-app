@@ -10,12 +10,17 @@ import { useRouter } from "expo-router";
 import { ActivityIndicator, FlatList, Image, ScrollView, Text, View } from "react-native";
 import "../globals.css";
  
+
 export default function App() {
   const router = useRouter();
   const { data: trendingMovies, loading: trendingLoading, error: trendingError } = useFetch(getTrendingMovie)
   const {data: movies = [], loading: moviesLoading, error: moviesError} =  useFetch(
   () => fetchMovies({ query: '' }),
-);
+  );
+
+
+
+
   return (
     <View className="flex-1 bg-primary">
       <Image source={images.bg} className="absolute w-full z-0" />
@@ -38,32 +43,40 @@ export default function App() {
                   )
                 }
                 <>
-                <FlatList className="mb-4 mt-3"
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                ItemSeparatorComponent={() => <View className="w-4"></View>}
-                data={trendingMovies}
-                renderItem={({ item , index }) => (
-                  <TrendingCard movie={item} index={index}/>
-                )}
-                keyExtractor={(item) => item.movie_id.toString()}
+                <FlatList
+                  className="mb-4 mt-3"
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  ItemSeparatorComponent={() => <View className="w-4"></View>}
+                  data={trendingMovies}
+                  renderItem={({ item, index }) => (
+                    <TrendingCard movie={item} index={index} />
+                  )}
+                  keyExtractor={(item) => item.movie_id.toString()}
+                  contentContainerStyle={{
+                    paddingRight: 20,
+                    paddingLeft: 5,
+                  }}
                 />
+
                 <Text className="text-lg font-bold mt-5 mb-3 text-white">Latest Movies</Text>
                 <FlatList
-                data={movies}
-                renderItem={({ item }) => (
-                  <MovieCard {...item}/>
-                )}  
-                keyExtractor={(item) => item.id.toString()}
-                numColumns={3}
-                columnWrapperStyle={{
-                  justifyContent: "flex-start",
-                  gap: 20,
-                  paddingRight: 5,
-                  marginBottom: 10
-                }}
-                className="mt-2 pb-32"
-                scrollEnabled={false}
+                  data={movies}
+                  renderItem={({ item }) => (
+                    <View style={{ flex: 1 / 3, padding: 5 }}>
+                      <MovieCard {...item} />
+                    </View>
+                  )}
+                  keyExtractor={(item) => item.id.toString()}
+                  numColumns={3}
+                  columnWrapperStyle={{
+                    justifyContent: "space-between",
+                    marginBottom: 10,
+                  }}
+                  contentContainerStyle={{
+                    paddingBottom: 32,
+                  }}
+                  scrollEnabled={false}
                 />
                 </>
               </View>
@@ -72,5 +85,6 @@ export default function App() {
           
       </ScrollView>
     </View>
+    
   );
 }
