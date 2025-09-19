@@ -1,15 +1,14 @@
 import { useEffect, useState } from "react";
 
-const useFetch = <T,>(fetchFunction: (params: any) => Promise<T>, autoFetch = true, initialParams: any = {}) => {
+const useFetch = <T,>(fetchFunction: (params: any) => Promise<T>, params: any = {}) => {
     const [data, setData] = useState<T | null>(null); 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
-    const fetchData = async(params = initialParams) => {
+    const fetchData = async() => {
         try {
             setLoading(true);
             setError(null);
-
             const result = await fetchFunction(params)
             setData(result)
 
@@ -21,18 +20,11 @@ const useFetch = <T,>(fetchFunction: (params: any) => Promise<T>, autoFetch = tr
         }
     }
 
-    const reset = () => {
-        setData(null);
-        setError(null);
-        setLoading(false);
-    }
     useEffect(() => {
-    if (autoFetch) {
         fetchData();
-    }
-    }, [fetchFunction, autoFetch])
+    }, [fetchFunction, JSON.stringify(params)])
 
-    return {data, loading, error, refetch: fetchData, reset}
+    return {data, loading, error}
 }
 
 export default useFetch;
