@@ -8,29 +8,53 @@ import { fetchMovies } from "@/services/api";
 import { getTrendingMovie } from "@/services/appwrite";
 import useFetch from "@/services/useFetch";
 import { useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, FlatList, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import "../globals.css";
 
 const LatestMovies = () => {
     const [page, setPage] = useState(1);
     const [selectedLetter, setSelectedLetter] = useState('');
+    const [movies, setMovies] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<any>(null);
+    const [totalPages, setTotalPages] = useState(1);
 
-    const fetchMoviesCallback = useCallback(
-      (params: { page?: number; query?: string }) => fetchMovies(params),
-      []
-    );
-    
-    const {data: movies = [], loading: moviesLoading, error: moviesError} =  useFetch(
-      fetchMoviesCallback,
-      { page, query: selectedLetter }
-    );
+    useEffect(() => {
+        const fetchLatestMovies = async () => {
+            try {
+                setLoading(true);
+                const fetchedData = await fetchMovies({ query: selectedLetter, page });
+                setMovies(fetchedData.results);
+                setTotalPages(fetchedData.total_pages);
+            } catch (err) {
+                setError(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchLatestMovies();
+    }, [page, selectedLetter]);
   
-    // Sort movies by rating from high to low and take the first 18 for a clean 3-column layout
-    const sortedMovies = useMemo(() => {
+    // Sort movies by rating and filter by selected letter for a clean 3-column layout
+    const sortedAndFilteredMovies = useMemo(() => {
         if (!movies) return [];
-        return [...movies].sort((a, b) => b.vote_average - a.vote_average).slice(0, 18);
-    }, [movies]);
+        const filtered = selectedLetter
+            ? movies.filter(movie => movie.title.toLowerCase().startsWith(selectedLetter.toLowerCase()))
+            : movies;
+
+        return filtered.sort((a, b) => {
+            // Push single-character titles to the last
+            if (a.title.length === 1 && b.title.length !== 1) {
+                return 1;
+            }
+            if (b.title.length === 1 && a.title.length !== 1) {
+                return -1;
+            }
+            // Otherwise, sort by rating from high to low
+            return b.vote_average - a.vote_average;
+        }).slice(0, 18);
+    }, [movies, selectedLetter]);
 
 
     const handleNext = () => {
@@ -52,18 +76,18 @@ const LatestMovies = () => {
   
     return (
         <View className="flex-1">
-            <Text className="text-lg font-bold mt-5 mb-3 text-white">Latest Movies</Text>
+            <Text className="text-lg font-bold mt-5 mb-3 text-white">Movies</Text>
             <View className="bg-dark-200 py-3 rounded-lg mb-5">
               <AlphabetFilter onSelect={handleAlphabetSelect} selectedLetter={selectedLetter} />
             </View>
-            {moviesLoading ? (
+            {loading ? (
                 <ActivityIndicator size="large" color="#0000ff" className="self-center mt-5" />
-            ) : moviesError ? (
-                <Text>Error: {moviesError.message}</Text>
+            ) : error ? (
+                <Text>Error: {error.message}</Text>
             ) : (
                 <>
                 <FlatList
-                    data={sortedMovies}
+                    data={sortedAndFilteredMovies}
                     renderItem={({ item }) => (
                         <View style={{ flex: 1 / 3, padding: 5 }}>
                             <MovieCard {...item} />
@@ -80,22 +104,25 @@ const LatestMovies = () => {
                     }}
                     scrollEnabled={false}
                 />
-                <View className="flex-row justify-between items-center mt-5">
+                {totalPages > 1 && (
+                <View className="flex-row justify-between items-center mt-5 mb-20">
                     <TouchableOpacity
                         onPress={handlePrevious}
                         disabled={page === 1}
-                        className={`px-4 py-2 rounded-lg ${page === 1 ? 'bg-gray-500' : 'bg-blue-500'}`}
+                        className={`px-4 py-2 rounded-lg ${page === 1 ? 'bg-dark-200' : 'bg-accent'}`}
                     >
-                        <Text className="text-white text-lg">Previous</Text>
+                        <Text className={`text-lg ${page === 1 ? 'text-white' : 'text-secondary font-semibold'}`}>Previous</Text>
                     </TouchableOpacity>
-                    <Text className="text-white text-lg">Page {page}</Text>
+                    <Text className="text-light-100 text-lg">Page {page}</Text>
                     <TouchableOpacity
                         onPress={handleNext}
-                        className="px-4 py-2 rounded-lg bg-blue-500"
+                        disabled={page === totalPages}
+                        className={`px-4 py-2 rounded-lg ${page === totalPages ? 'bg-dark-200' : 'bg-accent'}`}
                     >
-                        <Text className="text-white text-lg">Next</Text>
+                        <Text className={`text-lg ${page === totalPages ? 'text-white' : 'text-secondary font-semibold'}`}>Next</Text>
                     </TouchableOpacity>
                 </View>
+                )}
                 </>
             )}
         </View>
@@ -125,7 +152,7 @@ export default function App() {
                 {
                   trendingMovies && (
                     <View className="mt-10 ">
-                      <Text className="text-lg font-bold text-white mt-5 mb-3">Trending Movies</Text>
+                      <Text className="text-lg font-bold text-white mt-5 mb-3">Top Searches</Text>
                     </View>
                   )
                 }
