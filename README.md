@@ -11,7 +11,7 @@
   </div>
 
   <h3 align="center">A Movie Finding App </h3>
-  <h4 align="center">Fiters: Search real-time data from api | Trending Movie(base on user search) | Alpahbetic Search real-time data from api | Pagination</h4>
+  <h4 align="center">Search real-time data from api | Trending Movie(base on user search) | Alpahbetic Search real-time data from api | Pagination</h4>
 </div>
 
 ## 📋 <a name="table">Table of Contents</a>
